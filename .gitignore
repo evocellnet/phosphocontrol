@@ -8,15 +8,8 @@ __pycache__/
 .pytest_cache/
 _configtest.o.d
 
-# Data
-data/
-notebooks/
-
 # Results
 results/
-
-# Notes
-notes/
 
 # Old code / submission
 code/src/old_src
