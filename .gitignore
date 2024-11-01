@@ -1,0 +1,50 @@
+#Python bytecode/cache files
+*.pyo
+*.pyc
+__pycache__/
+
+# Used by pytest
+.cache
+.pytest_cache/
+_configtest.o.d
+
+# Data
+data/
+notebooks/
+
+# Results
+results/
+
+# Notes
+notes/
+
+# Old code / submission
+code/src/old_src
+code/src/bsub
+
+#Images
+*.png
+*.svg
+*.jpeg
+*.jpg
+
+#HTML files
+.html
+
+#Binaries
+bin/
+
+#PyCharm files
+.idea/
+
+#Sublime Project files
+sftp-config.json
+*.sublime-workspace
+*.sublime-project
+
+#R files
+.RData
+.Rhistory
+
+# VScode project files
+.vscode/**/*
