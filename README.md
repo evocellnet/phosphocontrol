@@ -38,7 +38,7 @@ The code was run on R v4.4.1.
 - `Clustal Omega` (used v1.2.4)
 
 # Dataset
-For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). The used structure data is available as a Zenodo repository (10.5281/zenodo.14217158).
+For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). Due to its size, the used structure data is available instead as a Zenodo repository (10.5281/zenodo.14217158).
 
 # Instructions
 todo
