@@ -13,30 +13,29 @@ The code has been run and tested on Linux (Ubuntu 20.04).
 
 The code was run on Python v3.10.13. The code depends on the following libraries (largely the standard Python scientific stack):
 
-numpy  (used v1.23.4)
-scipy  (used v1.9.3)
-numba  (used v0.56.3)
-pandas  (used v1.5.2)
-scikit-learn  (used v1.2.0)
-tqdm  (used v4.64.1)
-hdbscan  (used v0.8.29)
-umap  (used v0.5.3)
-matplotlib  (used v3.3.4)
-seaborn  (used v0.12.2)
-biopython  (used v1.76)
-prody  (used v2.4.0)
-geometricus  (used v0.1.2)
-PSA (used v1.1)
+- `numpy`  (used v1.23.4)
+- `scipy`  (used v1.9.3)
+- `numba`  (used v0.56.3)
+- `pandas`  (used v1.5.2)
+- `scikit-learn`  (used v1.2.0)
+- `tqdm`  (used v4.64.1)
+- `hdbscan`  (used v0.8.29)
+- `matplotlib`  (used v3.3.4)
+- `seaborn`  (used v0.12.2)
+- `biopython`  (used v1.76)
+- `prody`  (used v2.4.0)
+- `geometricus`  (used v0.1.2)
+- `PSA` (used v1.1)
 
 ## R dependencies
 
 The code was run on R v4.4.1.
 
-bio3d (used v2.4-4)
-FSA  (used v0.9.5)
+- `bio3d` (used v2.4-4)
+- `FSA`  (used v0.9.5)
 
 ## External dependencies
-Clustal Omega (used v1.2.4)
+- `Clustal Omega` (used v1.2.4)
 
 # Dataset
 For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). The used structure data is available as a Zenodo repository (10.5281/zenodo.14217158).
