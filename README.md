@@ -6,11 +6,9 @@ Contains code for the manuscript [Global comparative structural analysis of resp
 # Software requirements
 
 ## OS requirements
-
 The code has been run and tested on Linux (Ubuntu 20.04).
 
 ## Python dependencies
-
 The code was run on Python v3.10.13. The code depends on the following libraries (largely the standard Python scientific stack):
 
 - `numpy`  (used v1.23.4)
@@ -28,7 +26,6 @@ The code was run on Python v3.10.13. The code depends on the following libraries
 - `PSA` (used v1.1)
 
 ## R dependencies
-
 The code was run on R v4.4.1.
 
 - `bio3d` (used v2.4-4)
@@ -38,13 +35,12 @@ The code was run on R v4.4.1.
 - `Clustal Omega` (used v1.2.4)
 
 # Dataset
-For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). Due to its size, the used structure data is available instead as a Zenodo repository (10.5281/zenodo.14217158).
+For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). Due to its size, the used structure data is available instead as a [Zenodo repository](https://doi.org/10.5281/zenodo.14217157).
 
 # Instructions
-todo
+Individual scripts are typically set up to run on the data without the need for user input; instructions on the necessary inputs are otherwise provided as part of the documentation.
 
 # License
-
 The code is available under the BSD-3 license. See the LICENSE file for details.
 
 # Citation
