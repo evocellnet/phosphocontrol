@@ -41,6 +41,9 @@ Clustal Omega (used v1.2.4)
 # Dataset
 For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). The used structure data is available as a Zenodo repository (10.5281/zenodo.14217158).
 
+# Instructions
+todo
+
 # License
 
 The code is available under the BSD-3 license. See the LICENSE file for details.
