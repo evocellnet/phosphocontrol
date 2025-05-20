@@ -1,29 +1,35 @@
-"""
-Script to perform pairwise calculations of residue-to-residue
-distance matrix for
- - All phosphorylated versus non-phosphorylated structures
- - All phosphorylated versus non-phosphorylated structures
- - All non-phosphorylated versus non-phosphorylated structures
-"""
 import pandas as pd
 import numpy as np
 import warnings
 import os
 import sys
 warnings.filterwarnings('ignore')
-
 from scipy.spatial.distance import pdist
-
 from numba import jit
-
 from Bio import PDB
-
 import psa.load as load
 import psa.sequence as seq
 import psa.elastic as elastic
 
-# Functions
+########################
+#                      #
+# Function Definitions #
+#                      #
+########################
+
+
 def calculate_pdist(name):
+    """
+    Compute the pairwise distances between alpha-carbon atoms in a protein structure.
+    If phosphorylated residues are present, include their coordinates as well.
+
+    Parameters:
+        name (str): Unique identifier for the protein chain (e.g., PDBID_PSITE).
+
+    Returns:
+        np.ndarray: Vector containing the residue indices followed by pairwise 
+                    distances between C-alpha atoms.
+    """
     xyz, label = load.coordinates(pps[name])
     xyz_p, label_p = pinfo[name]
 
@@ -41,6 +47,22 @@ def calculate_pdist(name):
 
 def get_phosphores(name, relabel=None, transform=None, model_id=0,
                    chain_ids=None, path='./', file_type='pdb'):
+    """
+    Extract coordinates of phosphorylated residues (e.g., SEP, TPO, 
+    PTR) from a PDB or CIF file.
+
+    Parameters:
+        name (str): PDB ID
+        relabel (dict): Optional chain relabeling
+        transform (dict): Optional transformation
+        model_id (int): Model number (usually 0)
+        chain_ids (list/str): Specific chain(s) to extract
+        path (str): Path to the structure file
+        file_type (str): 'pdb' or 'cif'
+
+    Returns:
+        tuple: (coordinates (np.ndarray), labels (list))
+    """
     
     # Load parser
     if file_type == 'pdb':
@@ -65,7 +87,7 @@ def get_phosphores(name, relabel=None, transform=None, model_id=0,
     coordinates = []
     labels = []
 
-    # Loop over chains, peptides and residues
+    # Search for phosphorylated or modified residues
     for ch in chains:
         for res in ch:
                 if res.get_resname() in ['SEP', 'TPO', 'PTR', 'HIP', 'NEP']:
@@ -79,19 +101,31 @@ def get_phosphores(name, relabel=None, transform=None, model_id=0,
 
 
 def get_idx(labels):
+    """
+    Extract residue indices from label metadata.
+
+    Parameters:
+        labels (list): Metadata list for residues
+
+    Returns:
+        np.ndarray: Residue indices
+    """
     return np.array([label[0][3][1] for label in labels])
 
-# argument list:
+#########################
+#                       #
+# Main Script Execution #
+#                       #
+#########################
 
-#01. psite ("uniprot"_"psite")
-psite_arg = sys.argv[1]
+# Command line arguments
+psite_arg = sys.argv[1]                      # e.g., "P12345_67"
 
-
-# Load data
+# Load phosphosite metadata
 data = pd.read_csv("data/metadata/filtered_df.csv")
 
 
-# Get list of proteins and PDBs
+# Organize P/N structures per phosphosite
 protP_accession = {}
 protN_accession = {}
 
@@ -105,26 +139,7 @@ for psite in psites:
     protP_accession[psite] = list(set(dataA["AUTH_FULL_TWO"]))
     protN_accession[psite] = list(set(dataA["AUTH_FULL_ONE"]))
     
-# Get list of pairwise comparisons
-
-PP_list = {}
-NN_list = {}
-PN_list = {}
-
-for group in data.groupby(["PHOSPHOSITE"]):
-    df_group = group[1]
-    
-    psite = list(df_group["PHOSPHOSITE"])[0]
-    P = list(df_group["AUTH_FULL_TWO"])
-    N = list(df_group["AUTH_FULL_ONE"])
-    
-    PP_list[psite] = list(set(df_group["AUTH_FULL_TWO"]))
-    NN_list[psite] = list(set(df_group["AUTH_FULL_ONE"]))
-    PN_list[psite] = [i for i in zip(P, N)]
-
-    
-# Get PDB files
-
+# Define list of structures available in CIF format
 cif_list = ["6msb", "7ahz", "7ai1", "7ai0", "3ocb", "3qkm", "6l9t", 
             "8i9x", "8i9z", "8ia0", "8bp2", "7z9t", "7z6i", "7q5i", 
             "3bcr", "6yve", "8atl", "6weu", "6wew", "6wet", "6wfj", 
@@ -132,12 +147,13 @@ cif_list = ["6msb", "7ahz", "7ai1", "7ai0", "3ocb", "3qkm", "6l9t",
             "7q6h", "8idt", "8idy", "8flc", "8inf", "8flb", "8fla", 
             "7oa0", "6yum", "6yul", "6z83", "6z84", "6tlu"]
 
+# Load structures and phosphorylated residue information
+
 pps = {}
 pinfo = {}
 
 psite = psite_arg
 protein = psite.split("_")[0]
-#index = psite.split("_")[1]
 path = "data/PDB/" + protein + "/"
 
 for group in [protP_accession, protN_accession]:
@@ -152,13 +168,15 @@ for group in [protP_accession, protN_accession]:
 
 
         try:
+            # Load structure using custom loader
             structure = load.single_structure(name = name, 
                                               path = path,
                                               file_type = ft,
                                               chain_ids = "*",
                                               relabel = {chain: "*"})
             pps[accession] = structure
-
+            
+            # Extract phosphorylated residues            
             xyz, labels = get_phosphores(name = name, 
                                          path = path,
                                          file_type = ft,
@@ -167,6 +185,7 @@ for group in [protP_accession, protN_accession]:
             pinfo[accession] = [xyz, labels]
 
         except:
+            # If structure fails, remove from list
             group[psite].remove(accession)
 
 

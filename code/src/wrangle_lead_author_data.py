@@ -1,5 +1,12 @@
 """
-Script to mine AUTHOR field data and wrangle it
+Script to mine AUTHOR field data and wrangle it into a dataframe for
+further analysis.
+
+This data is used to study whether there is a batch effect according to
+the research group that solved the structure. 
+
+Usage:
+
 """
 
 from pathlib import Path
@@ -26,6 +33,7 @@ def get_structure_to_lead_author(valid_cif_files):
             structure_to_lead_author[cif_file.stem.lower()] = "ANONYMOUS"
 
     # Hack: manually add author name https://www.rcsb.org/structure/3UVR
+    # The file has a problem with this field and cannot be parsed properly
     structure_to_lead_author["3uvr"] = "Rauh, D."
 
     return structure_to_lead_author

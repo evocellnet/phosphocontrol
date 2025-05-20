@@ -1,9 +1,14 @@
+# Script to 
+#
+#
+
 library(bio3d)
 library(lsa)
 
 #######################
 # Parse CLI arguments #
 #######################
+
 args = commandArgs(trailingOnly=TRUE)
 
 #########

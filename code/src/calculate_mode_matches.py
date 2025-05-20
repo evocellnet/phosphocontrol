@@ -1,4 +1,19 @@
 """
+This script is for evaluating the similarity between normal modes of motion.
+This is done by:
+    - Calculating the root mean squared inner product (RMSIP) for all pairs
+      of non-trivial modes i and j between two structures A and B.
+    - Since structural variation can lead to differences in the relative
+      frequencies across structures, we need to match equivalent normal modes.
+      This is done using the Hungarian algorithm to find the optimal set of
+      matching modes.
+
+This forms the basis for the results shown on Fig. 3d, regarding
+similarity between matching normal modes of motion between phosphorylated
+and non-phosphorylated structures
+
+Usage:
+python calculate_mode_matches.py
 """
 
 from sys import argv
@@ -16,18 +31,17 @@ import pandas as pd
 from tqdm import tqdm
 
 
-
 def call_r_script(modes_file_arg, out_arg):
     """
-    Call R script to dump the eigenvectors
+    Call R script to dump the normal mode eigenvectors from the saved
+    bio3d objects (the NMA analysis script must be run first). 
     
     Arguments
     ---------
     modes_file_arg: path to NMA Rdata file
     out_arg: path for output csvs
 
-    Returns none
-
+    Returns none (writes files to disk)
     """
 
     call = ['Rscript','write_eigenvector_matrix.R',modes_file_arg, out_arg]
@@ -40,9 +54,9 @@ def call_r_script(modes_file_arg, out_arg):
         raise OSError("Rscript executable not found in PATH")
 
 
-
 def define_prot_to_status(annotation_df):
     """
+    Assigns each structure to a phosphorylation state.
     """
     prot_to_status = {}
     for _, row in annotation_df.iterrows():
@@ -53,7 +67,7 @@ def define_prot_to_status(annotation_df):
 
 def compute_pairwise_similarities(eigenvector_mtx_a, eigenvector_mtx_b):
     """
-    Calculate the cosine similarities between eigenvectors
+    Calculate the cosine similarities between normal mode eigenvectors.
 
     Arguments
     ---------
@@ -62,7 +76,6 @@ def compute_pairwise_similarities(eigenvector_mtx_a, eigenvector_mtx_b):
     Returns
     -------
     similarity_matrix: MxM matrix of cosine similarities
-
     """
     similarity_matrix = cosine_similarity(eigenvector_mtx_a.T, eigenvector_mtx_b.T)
     return similarity_matrix
@@ -114,6 +127,7 @@ def extract_pdb_code(filename):
 
 def process_valid_subdir(args):
     """
+    TODO: write documentation here
     """
 
     valid_subdir, annot_path, input_path, out_path = args
@@ -131,7 +145,8 @@ def process_valid_subdir(args):
     annot_df = pd.read_csv(annot_path / f"{psite}.csv")
     prot_to_status = define_prot_to_status(annot_df)
     
-    # Dump eigenvector matrices
+    # Call the R script to open the bio3d objects and dump the 
+    # eigenvector matrices
     mode_file = input_path / psite / "modes.RData.gz"
     call_r_script(mode_file, matrices_path)
     eigenvector_files_list = list(matrices_path.glob("*.csv"))
@@ -167,15 +182,12 @@ def process_valid_subdir(args):
         pearson_corr, pearson_pval = pearsonr(row_ind, col_ind)
 
         if status_a == "Phosphorylated" and status_b == "Phosphorylated":
-            #print(psite, pdb_code_a,status_a, pdb_code_b, status_b, "within p")
             within_p_similarities.append(best_matching_similarities)
             corr_df.append([spearman_corr, spearman_pval, pearson_corr, pearson_pval, 'within_phospho'])
         elif status_a == "Non-phosphorylated" and status_b == "Non-phosphorylated":
-            #print(psite, pdb_code_a,status_a, pdb_code_b,status_b, "within np")
             within_np_similarities.append(best_matching_similarities)
             corr_df.append([spearman_corr, spearman_pval, pearson_corr, pearson_pval, 'within_nonphospho'])
         else:
-            #print(psite, pdb_code_a,status_a, pdb_code_b,status_b, "between")
             between_similarities.append(best_matching_similarities)
             corr_df.append([spearman_corr, spearman_pval, pearson_corr, pearson_pval, 'between_groups'])
     
@@ -253,6 +265,7 @@ if __name__ == "__main__":
     # Match NMA modes #
     ###################
 
+    # TODO: why is this 20 here, for testing that the script actually runs?
     main(valid_subdirs[:20], annot_path, input_path, out_path, num_workers=num_workers)
     
     print("Done!")

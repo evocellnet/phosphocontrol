@@ -1,49 +1,61 @@
-"""
-Script to perform pairwise calculations of strain magnitude and
-correlation dimension at the residue level for: 
- - All phosphorylated versus non-phosphorylated structures
- - All phosphorylated versus non-phosphorylated structures
- - All non-phosphorylated versus non-phosphorylated structures
-"""
-
 import pandas as pd
 import numpy as np
 import warnings
 import os
 import sys
 warnings.filterwarnings('ignore')
-
 from numba import jit
 from scipy.ndimage import gaussian_filter1d
-
 import psa.load as load
 import psa.sequence as seq
 import psa.elastic as elastic
 
-# Functions
+########################
+#                      #
+# Function Definitions #
+#                      #
+########################
+
+
 def calculate_CD(p1, p2):
+    """
+    Calculates the correlation dimension (CD) between two protein structures.
+
+    Parameters:
+        p1, p2 (str): Identifiers for two protein chains (e.g., PDBID_PSITE).
+
+    Returns:
+        tuple: (cd, lambda3, idx) if successful; np.nan otherwise.
+            - cd: array of correlation dimension values.
+            - lambda3: array of principal stretch values.
+            - idx: residue indices from structure 1.
+    """
+    
+    # Identify the common residues between structures
     com_res, dict_1, dict_2 = seq.pairwise_alignment(pps[p1], pps[p2])
         
+    # Load coordinates and labels of atoms
     xyz_1, label_1 = load.coordinates(pps[p1], com_res, dict_1)
     xyz_2, label_2 = load.coordinates(pps[p2], com_res, dict_2)
-        
+    
+    # Calculates the intersection of atomic neighbourhoods with a radius = 12A
     weights = elastic.compute_weights_fast([xyz_1, xyz_2],
-                                           parameters = [12]) #16
+                                           parameters = [12])
 
     try:
+        # Compute deformation gradient and Lagrange strain
         F = elastic.deformation_gradient_fast(weights, xyz_1, xyz_2)
-        
-
         _, gam_n = elastic.lagrange_strain(F)
         stretches, _ = elastic.principal_stretches_from_g(gam_n)
 
+        # Use absolute third principal stretch as measure        
         lambda3 = np.absolute(stretches[:, 2])**.5
         idx = get_idx(label_1)
 
+        # Rank residues by stretch and compute CD for subsets of increasing size
         order = np.argsort(lambda3)[::-1]
         Ns = range(10, len(lambda3))
         cd = np.zeros(len(Ns))
-
         for i, N in enumerate(Ns):
             cd[i] = correlation_dimension(N, xyz_1[order], xyz_2[order])
         
@@ -54,6 +66,17 @@ def calculate_CD(p1, p2):
 
 @jit(nopython = True)
 def C(N, r, xyz_sorted):
+    """
+    Computes the correlation sum for a given radius r.
+
+    Parameters:
+        N (int): Number of points.
+        r (float): Radius for neighborhood.
+        xyz_sorted (np.ndarray): Coordinates (N, 3) sorted by importance.
+
+    Returns:
+        float: Normalized count of pairs within radius r.
+    """
     heaviside_sum = 0
     
     for i in range(N):
@@ -68,6 +91,15 @@ def C(N, r, xyz_sorted):
 
 @jit(nopython = True)
 def diam(xyz_sorted):
+    """
+    Computes the diameter (maximum pairwise distance) of a structure.
+
+    Parameters:
+        xyz_sorted (np.ndarray): Array of coordinates.
+
+    Returns:
+        float: Maximum pairwise distance.
+    """
     diam = 0
     
     N = len(xyz_sorted)
@@ -82,6 +114,16 @@ def diam(xyz_sorted):
     return diam ** .5
 
 def smoothed_gradient(N, xyz_sorted):
+    """
+    Computes a smoothed gradient of the log correlation sum.
+
+    Parameters:
+        N (int): Number of points.
+        xyz_sorted (np.ndarray): Coordinates sorted by stretch importance.
+
+    Returns:
+        tuple: (smoothed derivative values, corresponding radii)
+    """
     r_range = np.linspace(8, diam(xyz_sorted), 60)
     Cs = np.array([C(N, r, xyz_sorted) for r in r_range])
     
@@ -102,15 +144,47 @@ def smoothed_gradient(N, xyz_sorted):
     return diff_smt, r_int
 
 def correlation_dimension(N, xyz1_sorted, xyz2_sorted):
+    """
+    Computes the average maximum slope of the log-log correlation curve
+    for two structures.
+
+    Parameters:
+        N (int): Number of residues.
+        xyz1_sorted, xyz2_sorted (np.ndarray): Sorted coordinates.
+
+    Returns:
+        float: Average max slope (correlation dimension).
+    """
     grad1, r = smoothed_gradient(N, xyz1_sorted)
     grad2, r = smoothed_gradient(N, xyz2_sorted)
     
     return (np.max(grad1) + np.max(grad2)) / 2
 
 def get_idx(labels):
+    """
+    Extracts residue indices from label data.
+
+    Parameters:
+        labels (list): List of label tuples.
+
+    Returns:
+        np.ndarray: Residue indices.
+    """
     return np.array([label[0][3][1] for label in labels])
 
 def compare_diff(ab_list, downsample = False, size = 20):
+    """
+    Compares structures from different conditions (phosphorylated x 
+    non-phosphorylated).
+
+    Parameters:
+        ab_list (list): List of (p1, p2) pairs.
+        downsample (bool): Whether to reduce pair count.
+        size (int): Target sample size for downsampling.
+
+    Returns:
+        np.ndarray: Array of correlation dimension results.
+    """
     n = len(ab_list)
     
     if downsample and n > int(size**2):
@@ -131,6 +205,18 @@ def compare_diff(ab_list, downsample = False, size = 20):
     return lambda3
 
 def compare_same(aa_list, downsample = False, size = 20):
+    """
+    Compares structures from the same condition (phosphorylated x
+    phosphorylated, non-phosphorylated x non-phosphorylated).
+
+    Parameters:
+        aa_list (list): List of accessions.
+        downsample (bool): Whether to reduce pair count.
+        size (int): Target sample size for downsampling.
+
+    Returns:
+        np.ndarray: Array of correlation dimension results.
+    """
     n = len(aa_list)
     if n == 1:
         return np.nan
@@ -153,25 +239,21 @@ def compare_same(aa_list, downsample = False, size = 20):
         
     return lambda3
 
+#########################
+#                       #
+# Main Script Execution #
+#                       #
+#########################
 
+# Command line arguments
+psite_arg = sys.argv[1]                      # e.g., "P12345_67"
+downsample_arg = sys.argv[2] == "1"          # '1' for True, '0' for False
+size_arg = int(sys.argv[3])                  # Downsampling size
 
-# argument list:
-
-#01. psite ("uniprot"_"psite")
-psite_arg = sys.argv[1]
-
-#02. downsample 0 = False, 1 = True
-downsample_arg = sys.argv[2] == "1"
-
-#03. downsampling size
-size_arg = int(sys.argv[3])
-
-
-# Load data
+# Load phosphosite metadata
 data = pd.read_csv("data/metadata/filtered_df.csv")
 
-
-# Get list of proteins and PDBs
+# Build pairwise comparison lists
 protP_accession = {}
 protN_accession = {}
 
@@ -186,7 +268,6 @@ for psite in psites:
     protN_accession[psite] = list(set(dataA["AUTH_FULL_ONE"]))
     
 # Get list of pairwise comparisons
-
 PP_list = {}
 NN_list = {}
 PN_list = {}
@@ -203,8 +284,9 @@ for group in data.groupby(["PHOSPHOSITE"]):
     PN_list[psite] = [i for i in zip(P, N)]
 
     
-# Get PDB files
+# Load structures
 
+# list of structure identifiers that use .cif format
 cif_list = ["6msb", "7ahz", "7ai1", "7ai0", "3ocb", "3qkm", "6l9t", 
             "8i9x", "8i9z", "8ia0", "8bp2", "7z9t", "7z6i", "7q5i", 
             "3bcr", "6yve", "8atl", "6weu", "6wew", "6wet", "6wfj", 
@@ -216,7 +298,6 @@ pps = {}
 
 psite = psite_arg
 protein = psite.split("_")[0]
-#index = psite.split("_")[1]
 path = "data/PDB/" + protein + "/"
 
 for group in [protP_accession, protN_accession]:
@@ -242,8 +323,7 @@ for group in [protP_accession, protN_accession]:
             group[psite].remove(accession)
 
 
-# Calculate strain
-
+# Run pairwise comparison calculations
 compPP = compare_same(PP_list[psite], downsample_arg, size_arg)
 compNN = compare_same(NN_list[psite], downsample_arg, size_arg)
 compPN = compare_diff(PN_list[psite], downsample_arg, size_arg)

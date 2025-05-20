@@ -4,6 +4,18 @@ For each phosphosite, they are calculated by:
  - All phosphorylated versus non-phosphorylated
  - All phosphorylated versus non-phosphorylated
  - All non-phosphorylated versus non-phosphorylated
+
+This forms the basis of the analyses shown in Fig. 1 concerning RMSD.
+
+Usage:
+python all_global_rmsds.py 
+    --input_pairs
+    --structures
+    --domain_mode TRUE/FALSE
+    --domains 
+    --domain_cov
+    --output OUTPUT_PATH
+    --n_cpus INTEGER
 """
 
 import os
@@ -45,6 +57,7 @@ def digest_args():
                           are, rather than whole chains")
     ap.add_argument("--domains", type=Path,
                     help="Phosphosite domain location data", required=False)
+    # TODO: should probably call this something else like "domain_quality"
     ap.add_argument("--domain_cov",type=Path,
                     help='Path to domain quality information')
     ap.add_argument("--output", type=Path, help="Output path")
