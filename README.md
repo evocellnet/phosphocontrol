@@ -34,6 +34,13 @@ The code was run on R v4.4.1.
 ## External dependencies
 - `Clustal Omega` (used v1.2.4)
 
+## Installation
+
+Clone this repository to your local phosphocontrol folder:
+
+    cd ~ && mkdir -p phosphocontrol && cd phosphocontrol
+    git clone https://github.com/evocellnet/phosphocontrol.git
+
 # Dataset
 For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). Due to its size, the used structure data is available instead as a [Zenodo repository](https://doi.org/10.5281/zenodo.14217157).
 
