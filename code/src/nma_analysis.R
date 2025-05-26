@@ -1,11 +1,43 @@
 #!/usr/bin/env Rscript
 
-# Script to carry out normal mode analysis
-#
+# This script performs ensemble normal mode analysis (eNMA) to investigate the
+# effects of phosphorylation on protein dynamics.
+# It first processes a collection of PDB files, filters out structures that have
+# e.g. breaks in connectivity and conducts principal component analysis of the
+# structures. It then computes ensemble anisotropic network models and writes to
+# disk several properties derived from this (e.g. residue fluctuations and 
+# linear mutual information between residues).
 
-# Set number of cores to use
-# Using more than one can sometimes lead to weird bugs
+# Usage:
+# This script is meant to be called by dynamics_analysis_per_psite.py.
+# The analysis is performed on a given folder containing structures pertaining a
+# specific phosphosite.
+
+#   Rscript nma_analysis.R $INPUT_PATH $ANNOTATION_FILE $OUTPUT_PATH
+#
+# Arguments
+# ---------
+#   $INPUT_PATH      : Directory containing PDB files to analyze for a given phosphosite.
+#   $ANNOTATION_FILE : CSV file with columns 'Full.ID' (matching PDB filenames
+#                      without extension)
+#                      and 'Status', indicating either 'Phosphorylated' or 
+#                      'Non-phosphorylated'.
+#   $OUTPUT_PATH     : Directory where output files (plots, data) will be saved.
+#
+# Output
+# ------
+#   - PCA plot of atomic coordinates saved as 'pca.png'.
+#   - ANM mode fluctuations plot saved as 'modes_diffs.png'.
+#   - Fluctuation data saved as 'fluctuation_data.csv'.
+#   - ANM modes object saved as 'modes.RData.gz'.
+#   - Linear mutual information matrices saved as CSV files.
+#
+# Author: Miguel Correa Marrero
+
+
 library(bio3d)
+# Set number of cores to use
+# Using more than one core leads to weird bugs sometimes
 Sys.setenv(MC_CORES = 1)
 print('Starting!')
 
@@ -86,7 +118,7 @@ if (length(nonphospho_nr)==0) {
   stop("No non-phosphorylated structures after filtering; exiting")
 }
 
-# Remove conformationally redundant structures
+# Remove conformationally redundant structures to save memory
 names_phospho <- annot$Full.ID[phospho_nr]
 names_nonphospho <- annot$Full.ID[nonphospho_nr]
 # Separate into phosphorylated and non-phosphorylated structures
@@ -134,7 +166,7 @@ modes <- aanma(pdbs, rtb=TRUE, reduced=TRUE,ncore=1)
 modes.path <- file.path(out.path, "modes.RData.gz")
 save(modes, file = modes.path, compress = "gzip")
 
-# Save fluctuations to a csv file
+# Save residue-wise fluctuations to a csv file
 print("Saving fluctuations to disk...")
 fluctuations.path <- file.path(out.path, "fluctuation_data.csv")
 write.csv(modes$fluctuations, file = fluctuations.path, row.names = TRUE)
@@ -149,13 +181,13 @@ dev.off()
 # Linear mutual information calculations #
 ##########################################
 
-# Calculate linear mutual information for each structure and write it to a csv
+# Calculate residue-residue linear mutual information for each structure 
+# and write it to a csv
 cov_matrix <- cov.enma(modes)
 
 depth <- dim(cov_matrix)[3]
 for (i in 1:depth) {
   # Access the i-th layer of the array
-  print(i)
   cov_layer <- cov_matrix[,,i]
   # Calculate LMI for the structure
   lmi_matrix <- bio3d:::.cov2dccm(cov_layer, method="lmi")
@@ -184,6 +216,9 @@ for (i in 1:depth) {
 ############################
 # Similarities in dynamics #
 ############################
+
+# Calculate similarities in normal modes between structures using
+# the Bhattacharyya coefficient
 
 print("Calculating Bhattacharyya coefficients...")
 covs <- cov.enma(modes)
