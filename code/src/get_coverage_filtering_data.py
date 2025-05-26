@@ -1,7 +1,39 @@
+#!/usr/bin/env python
 """
-Script to gather information to filter the structure pairs dataset.
-It calculates coverage to the whole sequence and sequence similarity to
-other structures of the same protein.
+This script processes structural data and full-length UniProt sequences to calculate two
+metrics for each structure chain in the dataset:
+    1. Coverage: fraction of the full sequence that is represented in the structure.
+    2. Median similarity: average sequence similarity of a structure to other structures
+       of the same protein.
+The output is used to filter out structures for downstream analyses.
+
+Usage: python calculate_overlap.py
+
+Note: this script calls Clustal Omega to create multiple sequence alignments.
+      It must be installed in the system for it to run.
+
+Inputs
+------
+    - ../../data/raw/pdb_pairs/phosphorylated_residues_filtered_quality.csv:
+      CSV containing chain-to-UniProt mappings and PDB entity identifiers.
+    
+    - ../../data/raw/pdb_pairs/uniprot/seqs.fasta:
+      Multi-FASTA file containing full-length UniProt sequences.
+
+    - ../../data/raw/pdb_pairs/extracted_chains/pdb/*.pdb:
+      Directory of PDB files for individual chains.
+
+Outputs
+-------
+    - ../../data/raw/pdb_pairs/sequences/<UNIPROT_ID>/*.fasta:
+      FASTA files of structure-derived and full sequences, per protein.
+
+    - ../../data/raw/pdb_pairs/sequences/<UNIPROT_ID>/alignment.fasta:
+      Multiple sequence alignments (MSA) of structure chains per protein.
+
+    - ../../data/raw/pdb_pairs/overlap_df.csv:
+      Final dataset containing coverage and similarity values for each chain.
+
 """
 
 from pathlib import Path
@@ -17,7 +49,7 @@ from utils.fasta import parse_fasta, write_fasta, concatenate_fastas
 from utils.commands import call_clustalo_nohmm
 
 from tqdm import tqdm
-import pickle
+# import pickle
 
 
 def get_overlap_per_chain(unique_proteins, sequences_path):
@@ -153,11 +185,9 @@ if __name__ == "__main__":
         uniprot_id = list(subset_df["UNIPROT"].unique())[0]
         chain_to_uniprot_id[chain_name] = uniprot_id
 
-    with open('lmao.pickle', 'wb') as handle:
-        pickle.dump(chain_to_uniprot_id, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    # with open('lmao.pickle', 'rb') as handle:
-    #     chain_to_uniprot_id = pickle.load(handle)
+    # For debugging
+    # with open('chain_to_uniprot_id.pickle', 'wb') as handle:
+    #     pickle.dump(chain_to_uniprot_id, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # Extract sequences from chains    
     print("Extracting sequences from structures...")
