@@ -42,7 +42,7 @@ Clone this repository to your local phosphocontrol folder:
     git clone https://github.com/evocellnet/phosphocontrol.git
 
 # Dataset
-For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). Due to its size, the used structure data is available instead as a [Zenodo repository](https://doi.org/10.5281/zenodo.14217157).
+For convenience, some data is available in the repository (paired structures dataset, functional scores, UniProt site annotation...). Due to its size, the used structure data is available instead as a [Zenodo repository](https://doi.org/10.5281/zenodo.14217157). For testing purposes, a small sample of the dataset of paired structures is provided in data/processed/pdb_pairs/demo_filtered_df.csv.
 
 # Instructions
 Individual scripts are typically set up to run on the data without the need for user input; instructions on the necessary inputs are otherwise provided as part of the documentation.
