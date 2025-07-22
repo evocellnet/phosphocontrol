@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+# Code from Geometricus (Durairaj et al., Bioinformatics (2020))
+# Necessary to run Pfam structure embedding
 
 import numba as nb
 import numpy as np
