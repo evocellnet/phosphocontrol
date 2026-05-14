@@ -55,13 +55,16 @@ The code is available under the BSD-3 license. See the LICENSE file for details.
 # Citation
 
 ```bash
-@article{correa2024global,
+@article{correa2025global,
   title={Global comparative structural analysis of responses to protein phosphorylation},
   author={Correa Marrero, Miguel and Mello, Victor Hugo and Sartori, Pablo and Beltrao, Pedro},
-  journal={bioRxiv},
-  pages={2024--10},
-  year={2024},
-  publisher={Cold Spring Harbor Laboratory}
+  journal={Nature Communications},
+  volume={16},
+  number={1},
+  pages={9407},
+  year={2025},
+  publisher={Nature Publishing Group UK London}
 }
+
 ```
 
